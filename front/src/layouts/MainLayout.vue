@@ -80,7 +80,12 @@
     </div>
 
     <!-- AI 悬浮球助手 -->
-    <AgentBall base-url="http://localhost:8090" title="排班助手" />
+    <AgentBall
+      base-url="http://localhost:8090"
+      title="排班助手"
+      hint="可以问我排班、统计、请假规则、换班多排、纪律处理等问题。"
+      :prompts="agentPrompts"
+    />
   </div>
 </template>
 
@@ -117,6 +122,13 @@ const semesterStart = ref<string>('')
 const pendingMultiDuty = ref(0)
 const pendingSwapRequests = ref(0)
 const viewRefreshTick = ref(0)
+const agentPrompts = [
+  '现在第几周？我本周有排班吗？',
+  '统计一下每个人这学期值班次数前 5 名',
+  '请假需要提前几天申请？',
+  '为什么 223 号用户在第 5 教学周没有排班？',
+  '帮我解析：国庆节 10 月 1 日到 7 日放假，10 月 11 日补周三的课'
+]
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 // AI 助手完成写操作后，强制重挂载当前视图以刷新数据

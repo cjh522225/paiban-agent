@@ -68,9 +68,9 @@
         <div ref="listRef" class="agent-list" v-show="!showHistory">
           <div v-if="messages.length === 0" class="agent-empty">
             <p class="agent-empty-title">你好，我是{{ title }}</p>
-            <p class="agent-empty-desc">可以问我排班、统计、请假规则、换班多排、纪律处理等问题。</p>
-            <div class="agent-quick">
-              <button v-for="q in quickPrompts" :key="q" @click="send(q)">{{ q }}</button>
+            <p class="agent-empty-desc">{{ hint }}</p>
+            <div v-if="prompts.length" class="agent-quick">
+              <button v-for="q in prompts" :key="q" :title="q" @click="send(q)">{{ q }}</button>
             </div>
           </div>
           <div v-for="(m, i) in messages" :key="i" class="agent-msg" :class="m.role">
@@ -115,7 +115,9 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   baseUrl: { type: String, default: 'http://localhost:8090' },
-  title: { type: String, default: 'AI 助手' }
+  title: { type: String, default: 'AI 助手' },
+  hint: { type: String, default: '可以问我系统数据与业务规则等问题。' },
+  prompts: { type: Array, default: () => [] }
 })
 
 const open = ref(false)
@@ -136,6 +138,8 @@ const baseUrl = ref(localStorage.getItem('agentBall.baseUrl') || props.baseUrl)
 const ballTop = ref(Number(localStorage.getItem('agentBall.top') || 0) || Math.round(window.innerHeight * 0.55))
 const status = ref('unknown')
 const conversationId = ref(getOrCreateConversationId())
+
+const prompts = computed(() => (Array.isArray(props.prompts) ? props.prompts : []))
 
 const WRITE_TOOLS = new Set([
   'approveLeave', 'submitLeave', 'cancelLeave',
@@ -170,13 +174,6 @@ function getOrCreateConversationId(forceNew = false) {
   localStorage.setItem('agentBall.conversationId', id)
   return id
 }
-
-const quickPrompts = [
-  '现在第几周？我本周有排班吗？',
-  '统计一下每个人这学期值班次数前 5 名',
-  '请假需要提前几天申请？',
-  '为什么 223 号用户在第 5 教学周没有排班？'
-]
 
 const statusClass = computed(() => ({ ok: status.value === 'up', err: status.value === 'down' }))
 const statusText = computed(() =>
