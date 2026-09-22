@@ -1,4 +1,4 @@
-# 智能排班系统 · Agent 
+# 智能排班系统 · Agent 升级版
 
 面向高校党群组织「宿舍值班 + 办公室值班」双场景的智能排班系统，并在其基础上完成了 **AI Agent 化升级**：
 独立 Agent 服务（Spring AI 工具编排 / RAG / MCP Server / 人工确认），前端内嵌**悬浮球 AI 助手**。
@@ -66,6 +66,8 @@ flowchart LR
 ```
 
 ## 快速开始
+
+**前置要求**：Node.js 18+、Java 17+、Maven 3.9+（Windows 也可直接用 `server/mvnw.cmd`）、MySQL 8。
 
 ### 1. 数据库
 ```bash
