@@ -58,7 +58,10 @@ class ToolRegistryTest {
                 "sendMessage", "updateMessage", "deleteMessage", "createUser", "updateUser", "deleteUser",
                 "batchDeleteUsers", "saveMyAvailability", "handleDisciplineAction", "deleteHoliday",
                 "submitLeave", "cancelLeave", "submitSwapRequest", "completeSwapRequest", "cancelSwapRequest",
-                "submitMultiDuty", "cancelMultiDuty", "deleteSchedule", "markAllMessagesRead", "deleteAvailability");
+                "submitMultiDuty", "cancelMultiDuty", "deleteSchedule", "markAllMessagesRead", "deleteAvailability",
+                "createSchedule", "addDisciplineRecord", "deleteDisciplineRecord", "markMessageRead",
+                "saveMessageDraft", "deleteMessageDraft", "manageDormitory", "manageOffice", "manageTimeSlot",
+                "saveSemester", "updateOfficeSlotCapacity", "saveDormIdentityPermission", "manageDutyAdjustment");
     }
 
     private ToolRegistry registry(String mode) {

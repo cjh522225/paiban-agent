@@ -80,7 +80,7 @@
     </div>
 
     <!-- AI 悬浮球助手 -->
-    <AgentBall base-url="http://localhost:8090" />
+    <AgentBall base-url="http://localhost:8090" title="排班助手" />
   </div>
 </template>
 

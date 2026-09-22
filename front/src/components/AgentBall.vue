@@ -5,7 +5,7 @@
       class="agent-ball"
       :class="{ active: open }"
       :style="{ top: ballTop + 'px' }"
-      title="值班助手（点击展开/收起）"
+      :title="title + '（点击展开/收起）'"
       @pointerdown="onPointerDown"
     >
       <span class="agent-ball-icon">AI</span>
@@ -67,7 +67,7 @@
 
         <div ref="listRef" class="agent-list" v-show="!showHistory">
           <div v-if="messages.length === 0" class="agent-empty">
-            <p class="agent-empty-title">你好，我是值班助手</p>
+            <p class="agent-empty-title">你好，我是{{ title }}</p>
             <p class="agent-empty-desc">可以问我排班、统计、请假规则、换班多排、纪律处理等问题。</p>
             <div class="agent-quick">
               <button v-for="q in quickPrompts" :key="q" @click="send(q)">{{ q }}</button>
@@ -115,7 +115,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   baseUrl: { type: String, default: 'http://localhost:8090' },
-  title: { type: String, default: '值班助手' }
+  title: { type: String, default: 'AI 助手' }
 })
 
 const open = ref(false)

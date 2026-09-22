@@ -410,7 +410,313 @@ public class PaibanWriteTools {
         return json(result("POST /api/users/batch-delete", client.post(token, "/api/users/batch-delete", ids)));
     }
 
+    // ==================== 排班补充 / 纪律 / 消息补充 ====================
+
+    @Tool(name = "createSchedule", description = "手工新增单条排班（仅管理员）：userId 为值班人 ID，dutyDate 为日期 yyyy-MM-dd，timeSlot 为时段（如 巡班）。调用前请与用户确认。")
+    public String createSchedule(
+            @ToolParam(description = "类型：dormitory 或 office") String type,
+            @ToolParam(description = "地点 ID（楼栋或办公室）") long locationId,
+            @ToolParam(description = "值班人用户 ID") long userId,
+            @ToolParam(description = "值班日期 yyyy-MM-dd") String dutyDate,
+            @ToolParam(description = "时段，如 巡班/坐班/敲灯") String timeSlot,
+            @ToolParam(required = false, description = "地点名称") String locationName) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("type", type);
+        body.put("locationId", locationId);
+        body.put("userId", userId);
+        body.put("dutyDate", dutyDate);
+        body.put("timeSlot", timeSlot);
+        putIfPresent(body, "locationName", locationName);
+        return json(result("POST /api/schedules", client.post(token, "/api/schedules", body)));
+    }
+
+    @Tool(name = "addDisciplineRecord", description = "新增纪律记录（仅管理员）：recordType 传 late(迟到) 或 absent(缺岗)。调用前请与用户确认。")
+    public String addDisciplineRecord(
+            @ToolParam(description = "用户 ID") long userId,
+            @ToolParam(description = "类型：late 或 absent") String recordType,
+            @ToolParam(required = false, description = "值班日期 yyyy-MM-dd") String dutyDate,
+            @ToolParam(required = false, description = "备注") String note) {
+        if (!"late".equals(recordType) && !"absent".equals(recordType)) {
+            throw new BusinessApiException(400, "无效记录类型：" + recordType + "（只能是 late 或 absent）");
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("userId", userId);
+        body.put("recordType", recordType);
+        putIfPresent(body, "dutyDate", dutyDate);
+        putIfPresent(body, "note", note);
+        return json(result("POST /api/discipline", client.post(token, "/api/discipline", body)));
+    }
+
+    @Tool(name = "deleteDisciplineRecord", description = "删除纪律记录（仅管理员）。调用前请与用户确认。")
+    public String deleteDisciplineRecord(@ToolParam(description = "纪律记录 ID") long recordId) {
+        return json(result("DELETE /api/discipline/" + recordId, client.delete(token, "/api/discipline/" + recordId)));
+    }
+
+    @Tool(name = "markMessageRead", description = "把指定消息标记为已读（当前登录人）。")
+    public String markMessageRead(@ToolParam(description = "消息 ID") long messageId) {
+        return json(result("POST /api/messages/" + messageId + "/read",
+                client.post(token, "/api/messages/" + messageId + "/read", null)));
+    }
+
+    @Tool(name = "saveMessageDraft", description = "保存消息草稿（仅管理员，按人 upsert 单条草稿）。")
+    public String saveMessageDraft(
+            @ToolParam(required = false, description = "草稿标题") String title,
+            @ToolParam(required = false, description = "草稿内容") String content,
+            @ToolParam(required = false, description = "类型：duty/approval/system/urgent") String type) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        putIfPresent(body, "title", title);
+        putIfPresent(body, "content", content);
+        putIfPresent(body, "type", type);
+        return json(result("POST /api/messages/draft", client.post(token, "/api/messages/draft", body)));
+    }
+
+    @Tool(name = "deleteMessageDraft", description = "删除本人消息草稿（仅管理员）。")
+    public String deleteMessageDraft() {
+        return json(result("DELETE /api/messages/draft", client.delete(token, "/api/messages/draft")));
+    }
+
+    // ==================== 基础数据与配置 ====================
+
+    @Tool(name = "manageDormitory", description = "宿舍楼管理（仅管理员）：action 传 create/update/delete；update/delete 需 id；create 需 code 与 name。破坏性操作（delete 会级联删除该楼排班）需先与用户确认。")
+    public String manageDormitory(
+            @ToolParam(description = "操作：create / update / delete") String action,
+            @ToolParam(required = false, description = "楼栋 ID（update/delete 必填）") Long id,
+            @ToolParam(required = false, description = "楼栋编码（create 必填）") String code,
+            @ToolParam(required = false, description = "楼栋名称（create 必填）") String name,
+            @ToolParam(required = false, description = "所属区域") String building,
+            @ToolParam(required = false, description = "楼层数") Integer floor,
+            @ToolParam(required = false, description = "性别：男/女") String gender,
+            @ToolParam(required = false, description = "状态：0 停用 / 1 启用") Integer status) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        String normalized = normalizeAction(action);
+        if (!"create".equals(normalized)) {
+            if (id == null) {
+                throw new BusinessApiException(400, "update/delete 需要提供 id");
+            }
+            body.put("id", id);
+        } else {
+            if (code == null || code.isBlank() || name == null || name.isBlank()) {
+                throw new BusinessApiException(400, "create 需要提供 code 与 name");
+            }
+            body.put("code", code);
+            body.put("name", name);
+        }
+        putIfPresent(body, "building", building);
+        if (floor != null) {
+            body.put("floor", floor);
+        }
+        putIfPresent(body, "gender", gender);
+        if (status != null) {
+            body.put("status", status);
+        }
+        if ("delete".equals(normalized)) {
+            return json(result("DELETE /api/dormitories/" + id, client.delete(token, "/api/dormitories/" + id)));
+        }
+        if ("create".equals(normalized)) {
+            return json(result("POST /api/dormitories", client.post(token, "/api/dormitories", body)));
+        }
+        return json(result("PUT /api/dormitories", client.put(token, "/api/dormitories", body)));
+    }
+
+    @Tool(name = "manageOffice", description = "办公室管理（仅管理员）：action 传 create/update/delete；update/delete 需 id；create 需 code 与 name。delete 会级联删除该办公室排班，需先与用户确认。")
+    public String manageOffice(
+            @ToolParam(description = "操作：create / update / delete") String action,
+            @ToolParam(required = false, description = "办公室 ID（update/delete 必填）") Long id,
+            @ToolParam(required = false, description = "编码（create 必填）") String code,
+            @ToolParam(required = false, description = "名称（create 必填）") String name,
+            @ToolParam(required = false, description = "所属楼宇") String building,
+            @ToolParam(required = false, description = "楼层（字符串）") String floor,
+            @ToolParam(required = false, description = "状态：0 停用 / 1 启用") Integer status) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        String normalized = normalizeAction(action);
+        if (!"create".equals(normalized)) {
+            if (id == null) {
+                throw new BusinessApiException(400, "update/delete 需要提供 id");
+            }
+            body.put("id", id);
+        } else {
+            if (code == null || code.isBlank() || name == null || name.isBlank()) {
+                throw new BusinessApiException(400, "create 需要提供 code 与 name");
+            }
+            body.put("code", code);
+            body.put("name", name);
+        }
+        putIfPresent(body, "building", building);
+        putIfPresent(body, "floor", floor);
+        if (status != null) {
+            body.put("status", status);
+        }
+        if ("delete".equals(normalized)) {
+            return json(result("DELETE /api/offices/" + id, client.delete(token, "/api/offices/" + id)));
+        }
+        if ("create".equals(normalized)) {
+            return json(result("POST /api/offices", client.post(token, "/api/offices", body)));
+        }
+        return json(result("PUT /api/offices", client.put(token, "/api/offices", body)));
+    }
+
+    @Tool(name = "manageTimeSlot", description = "时间段管理（仅管理员）：action 传 create/update/delete；update/delete 需 id；create 需 label。调用前请与用户确认。")
+    public String manageTimeSlot(
+            @ToolParam(description = "操作：create / update / delete") String action,
+            @ToolParam(required = false, description = "时段 ID（update/delete 必填）") Long id,
+            @ToolParam(required = false, description = "时段名称（create 必填），如 巡班(19:00-21:00)") String label,
+            @ToolParam(required = false, description = "开始时间 HH:mm") String startTime,
+            @ToolParam(required = false, description = "结束时间 HH:mm") String endTime,
+            @ToolParam(required = false, description = "时段分类，如 上午/下午/晚") String period,
+            @ToolParam(required = false, description = "排序号") Integer sortOrder,
+            @ToolParam(required = false, description = "状态：0 停用 / 1 启用") Integer status) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        String normalized = normalizeAction(action);
+        if (!"create".equals(normalized)) {
+            if (id == null) {
+                throw new BusinessApiException(400, "update/delete 需要提供 id");
+            }
+            body.put("id", id);
+        } else if (label == null || label.isBlank()) {
+            throw new BusinessApiException(400, "create 需要提供 label");
+        }
+        putIfPresent(body, "label", label);
+        putIfPresent(body, "startTime", startTime);
+        putIfPresent(body, "endTime", endTime);
+        putIfPresent(body, "period", period);
+        if (sortOrder != null) {
+            body.put("sortOrder", sortOrder);
+        }
+        if (status != null) {
+            body.put("status", status);
+        }
+        if ("delete".equals(normalized)) {
+            return json(result("DELETE /api/time-slots/" + id, client.delete(token, "/api/time-slots/" + id)));
+        }
+        if ("create".equals(normalized)) {
+            return json(result("POST /api/time-slots", client.post(token, "/api/time-slots", body)));
+        }
+        return json(result("PUT /api/time-slots", client.put(token, "/api/time-slots", body)));
+    }
+
+    @Tool(name = "saveSemester", description = "保存学期配置（仅管理员，upsert）：semesterId 为空则新增、有值则更新；startDate 为学期开始日期 yyyy-MM-dd，totalWeeks 默认 18。调用前请与用户确认。")
+    public String saveSemester(
+            @ToolParam(required = false, description = "学期 ID（更新时传）") Long semesterId,
+            @ToolParam(required = false, description = "学期名称") String name,
+            @ToolParam(description = "开始日期 yyyy-MM-dd") String startDate,
+            @ToolParam(required = false, description = "总周数，默认 18") Integer totalWeeks) {
+        if (startDate == null || startDate.isBlank()) {
+            throw new BusinessApiException(400, "请提供学期开始日期");
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        if (semesterId != null) {
+            body.put("id", semesterId);
+        }
+        putIfPresent(body, "name", name);
+        body.put("startDate", startDate);
+        body.put("totalWeeks", totalWeeks == null ? 18 : totalWeeks);
+        return json(result("POST /api/semester", client.post(token, "/api/semester", body)));
+    }
+
+    @Tool(name = "updateOfficeSlotCapacity", description = "设置办公室每节课人数上限（仅管理员，1~20）。调用前请与用户确认。")
+    public String updateOfficeSlotCapacity(@ToolParam(description = "人数上限 1~20") int capacity) {
+        if (capacity < 1 || capacity > 20) {
+            throw new BusinessApiException(400, "每节课人数必须为 1~20 的整数");
+        }
+        return json(result("PUT /api/office-schedule-config",
+                client.put(token, "/api/office-schedule-config", Map.of("slotCapacity", capacity))));
+    }
+
+    @Tool(name = "saveDormIdentityPermission", description = "保存宿舍岗位身份权限矩阵（仅管理员，覆盖式）："
+            + "matrix 格式 `身份:巡班:坐班:敲灯`（0/1），多项逗号分隔，例如 `巡班:1:1:1,坐班:1:0:0,敲灯:1:1:1`。调用前请与用户确认。")
+    public String saveDormIdentityPermission(@ToolParam(description = "权限矩阵，如 巡班:1:1:1,坐班:1:0:0") String matrix) {
+        List<Map<String, Object>> payload = parseIdentityMatrix(matrix);
+        return json(result("PUT /api/dorm-identity-permission",
+                client.put(token, "/api/dorm-identity-permission", payload)));
+    }
+
+    @Tool(name = "manageDutyAdjustment", description = "调休配置管理（仅管理员）：action 传 create/delete；create 需 startDate、endDate，"
+            + "makeups 格式 `补课日=被替换日` 多项逗号分隔（如 `2026-09-27=2026-10-05`）；delete 需 id。调用前请与用户确认。")
+    public String manageDutyAdjustment(
+            @ToolParam(description = "操作：create / delete") String action,
+            @ToolParam(required = false, description = "调休配置 ID（delete 必填）") Long id,
+            @ToolParam(required = false, description = "开始日期 yyyy-MM-dd（create 必填）") String startDate,
+            @ToolParam(required = false, description = "结束日期 yyyy-MM-dd（create 必填）") String endDate,
+            @ToolParam(required = false, description = "备注") String note,
+            @ToolParam(required = false, description = "补课映射，如 2026-09-27=2026-10-05") String makeups) {
+        if ("delete".equals(normalizeAction(action))) {
+            if (id == null) {
+                throw new BusinessApiException(400, "delete 需要提供 id");
+            }
+            return json(result("DELETE /api/duty-adjustments/" + id,
+                    client.delete(token, "/api/duty-adjustments/" + id)));
+        }
+        if (startDate == null || startDate.isBlank() || endDate == null || endDate.isBlank()) {
+            throw new BusinessApiException(400, "create 需要提供 startDate 与 endDate");
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("startDate", startDate);
+        body.put("endDate", endDate);
+        putIfPresent(body, "note", note);
+        body.put("makeups", parseMakeups(makeups));
+        return json(result("POST /api/duty-adjustments", client.post(token, "/api/duty-adjustments", body)));
+    }
+
     // ==================== 内部实现 ====================
+
+    private String normalizeAction(String action) {
+        if (action == null) {
+            throw new BusinessApiException(400, "请指定操作：create/update/delete");
+        }
+        String value = action.trim().toLowerCase();
+        return switch (value) {
+            case "create", "新增", "添加" -> "create";
+            case "update", "修改", "更新" -> "update";
+            case "delete", "删除" -> "delete";
+            default -> throw new BusinessApiException(400, "无效操作：" + action + "（create/update/delete）");
+        };
+    }
+
+    private List<Map<String, Object>> parseIdentityMatrix(String matrix) {
+        if (matrix == null || matrix.isBlank()) {
+            throw new BusinessApiException(400, "请提供权限矩阵，如 巡班:1:1:1,坐班:1:0:0");
+        }
+        List<Map<String, Object>> payload = new ArrayList<>();
+        for (String item : matrix.split(",")) {
+            String[] parts = item.trim().split(":");
+            if (parts.length != 4) {
+                throw new BusinessApiException(400, "权限矩阵格式不正确：" + item + "（应为 身份:巡班:坐班:敲灯）");
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("identity", parts[0].trim());
+            row.put("allowPatrol", parseFlag(parts[1]));
+            row.put("allowDuty", parseFlag(parts[2]));
+            row.put("allowKnock", parseFlag(parts[3]));
+            payload.add(row);
+        }
+        return payload;
+    }
+
+    private int parseFlag(String value) {
+        String v = value.trim();
+        if (!"0".equals(v) && !"1".equals(v)) {
+            throw new BusinessApiException(400, "权限取值只能是 0 或 1：" + value);
+        }
+        return Integer.parseInt(v);
+    }
+
+    private List<Map<String, Object>> parseMakeups(String makeups) {
+        List<Map<String, Object>> payload = new ArrayList<>();
+        if (makeups == null || makeups.isBlank()) {
+            return payload;
+        }
+        for (String item : makeups.split(",")) {
+            String[] parts = item.trim().split("=");
+            if (parts.length != 2) {
+                throw new BusinessApiException(400, "补课映射格式不正确：" + item + "（应为 补课日=被替换日）");
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("makeupDate", parts[0].trim());
+            row.put("replacedDate", parts[1].trim());
+            payload.add(row);
+        }
+        return payload;
+    }
 
     private void requireRange(String startDate, String endDate) {
         if (startDate == null || startDate.isBlank() || endDate == null || endDate.isBlank()) {

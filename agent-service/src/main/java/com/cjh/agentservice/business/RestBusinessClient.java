@@ -32,6 +32,7 @@ public class RestBusinessClient implements BusinessClient {
 
     @Override
     public JsonNode get(String token, String path, Map<String, String> params) {
+        requireToken(token);
         return restClient.get()
                 .uri(builder -> {
                     builder.path(path);
@@ -69,6 +70,7 @@ public class RestBusinessClient implements BusinessClient {
     }
 
     private JsonNode exchange(HttpMethod method, String token, String path, Object body) {
+        requireToken(token);
         RestClient.RequestBodySpec spec = restClient.method(method)
                 .uri(path)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -77,6 +79,12 @@ public class RestBusinessClient implements BusinessClient {
             spec = spec.body(body);
         }
         return spec.exchange((request, response) -> parse(path, response.getStatusCode().value(), readBody(response.getBody())));
+    }
+
+    private void requireToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new BusinessApiException(401, "未登录：请先在系统内登录后再试（页面内的悬浮球会自动携带登录态）");
+        }
     }
 
     private String readBody(InputStream stream) {
