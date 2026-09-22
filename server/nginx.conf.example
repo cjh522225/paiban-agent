@@ -1,0 +1,54 @@
+﻿# Nginx 配置参考 - 排班系统
+# 将此文件放到服务器的 /etc/nginx/conf.d/ 或相应目录
+# 根据实际情况修改
+
+server {
+    listen 80;
+    server_name your-server-ip;  # 或者你的域名
+
+    # 前端静态文件
+    location / {
+        root /var/www/paiban;  # 修改为实际的前端 dist 目录路径
+        index index.html;
+        try_files $uri $uri/ /index.html;  # Vue Router history 模式必需
+
+        # 禁止缓存 index.html，确保用户总是获取最新版本
+        location = /index.html {
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+            add_header Pragma "no-cache";
+            add_header Expires "0";
+        }
+    }
+
+    # 静态资源缓存策略
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        root /var/www/paiban;
+        # 带 hash 的静态资源可以长期缓存
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # 后端 API 代理
+    location /api/ {
+        proxy_pass http://localhost:8080/api/;  # 后端 Spring Boot 服务
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # 超时设置
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # 附件文件代理（后端上传目录）
+    location /uploads/ {
+        proxy_pass http://localhost:8080/uploads/;  # 后端 Spring Boot 静态资源
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+}

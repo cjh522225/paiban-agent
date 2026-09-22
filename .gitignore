@@ -1,0 +1,170 @@
+# ===================
+# 操作系统文件
+# ===================
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+*.tmp
+
+# ===================
+# IDE / 编辑器配置
+# ===================
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.classpath
+*.project
+.opencode/
+.codegraph/
+
+
+# ===================
+# 日志文件
+# ===================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===================
+# 环境变量（敏感信息）
+# ===================
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+notepad.env
+
+# ===================
+# 依赖目录
+# ===================
+node_modules/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+vendor/
+config/node_modules/          # 您原有自定义路径
+
+# ===================
+# 构建产物
+# ===================
+dist/
+dist-ssr/
+build/
+target/
+.out/
+.output/
+*.jar
+*.war
+*.class
+*.tsbuildinfo
+config/dist/                  # 您原有自定义路径
+
+# ===================
+# 缓存文件
+# ===================
+.cache/
+.eslintcache
+.prettiercache
+.vite/
+.turbo/
+.nuxt/
+.swc/
+
+
+# ===================
+# 测试覆盖率
+# ===================
+coverage/
+.nyc_output/
+.vitest-coverage/
+
+# ===================
+# Docker（可选）
+# ===================
+.dockerignore
+
+# ===================
+# Python 相关（如果您有后端）
+# ===================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+
+# ===================
+# Gradle 相关（如使用 Java 构建）
+# ===================
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# ===================
+# 其他杂项
+# ===================
+*.tgz
+*.tar.gz
+*.zip
+*.7z
+*.bak
+*.orig
+.sentrycli/
+.chrome-debug-*
+config/env/                   # 您原有自定义路径
+
+# ===================
+# 项目文档与工具（不纳入版本控制）
+# ===================
+.superpowers/
+docs/
+
+# ===================
+# 保留您原有的特殊排除项
+# ===================
+# 以下为原文件中额外的排除（已确认无重复）
+
+# ===================
+# 附件上传目录（不纳入版本控制）
+# ===================
+uploads/
+
+# ===================
+# 开发调试临时文件（不纳入版本控制）
+# ===================
+test_schedule_api.py
+test_module_v3.py
+test_leave_api.py
+gen_batch_data.py
+backup_*/
+test_attach/
+*bugfix.patch
+
+# ===================
+# OpenSpec 个人工具配置与提案（个人使用，不纳入版本控制）
+# ===================
+.claude/
+openspec/
+
+# 空闲时间/测试数据生成脚本（本地使用，不纳入版本控制）
+批量生成空闲时间.py
+批量生成测试数据.py
+
+# 测试报告等临时产物（不纳入版本控制）
+排班测试报告.html
+# agent-service ��������
+data/
+agent-service/data/
+

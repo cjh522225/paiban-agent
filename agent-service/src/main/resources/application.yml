@@ -1,0 +1,53 @@
+﻿server:
+  port: ${AGENT_PORT:8090}
+
+spring:
+  application:
+    name: agent-service
+  ai:
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY:test-key}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    mcp:
+      server:
+        name: agent-service
+        version: 0.1.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      cors:
+        allowed-origins: "*"
+        allowed-methods: "*"
+        allowed-headers: "*"
+
+agent:
+  # demo | paiban | dorm
+  mode: ${AGENT_MODE:demo}
+  paiban:
+    base-url: ${PAIBAN_BASE_URL:http://localhost:8080}
+    service-username: ${PAIBAN_SERVICE_USERNAME:admin}
+    service-password: ${PAIBAN_SERVICE_PASSWORD:change-me}
+  dorm:
+    base-url: ${DORM_BASE_URL:http://localhost:8081}
+    service-username: ${DORM_SERVICE_USERNAME:admin}
+    service-password: ${DORM_SERVICE_PASSWORD:change-me}
+  rag:
+    enabled: true
+    top-k: 4
+    siliconflow:
+      base-url: ${SILICONFLOW_BASE_URL:https://api.siliconflow.cn}
+      api-key: ${SILICONFLOW_API_KEY:}
+      embedding-model: BAAI/bge-m3
+    rerank:
+      enabled: ${RAG_RERANK_ENABLED:false}
+      model: BAAI/bge-reranker-v2-m3
+  chat:
+    data-dir: ${AGENT_CHAT_DIR:data/chat}
+
+logging:
+  level:
+    org.springframework.ai: INFO
+    com.cjh.agentservice: INFO
