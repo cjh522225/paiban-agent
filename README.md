@@ -3,7 +3,17 @@
 面向高校党群组织「宿舍值班 + 办公室值班」双场景的智能排班系统，并在其基础上完成了 **AI Agent 化升级**：
 独立 Agent 服务（Spring AI 工具编排 / RAG / MCP Server / 人工确认），前端内嵌**悬浮球 AI 助手**。
 
-> 说明：排班系统为团队项目（多人协作，已在校园实际部署使用）；
+> 说明：排班系统为团队项目（多人协作，已在校园实际部署使用）。
+
+## 效果预览
+
+管理首页内嵌「排班助手」悬浮球：流式回答、Markdown 表格、工具调用可视化（示例问题：本周排班）
+
+<img src="docs/screenshots/paiban-agent-answer.png" width="860" alt="排班助手对话与工具调用" />
+
+空状态快捷问题与面板（按系统定制）：
+
+<img src="docs/screenshots/paiban-agent-panel.png" width="620" alt="排班助手面板" />
 
 ## 功能特性
 
@@ -54,6 +64,8 @@ flowchart LR
   MCP -->|只读工具| TOOLS
 ```
 
+> 更完整的架构与关键链路（工具编排 / RAG / HITL / MCP / 审计）见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
+
 ## 目录结构
 
 ```
@@ -61,6 +73,7 @@ flowchart LR
 ├─ front/           # Vue 3 前端（含悬浮球助手组件 src/components/AgentBall.vue）
 ├─ server/          # Spring Boot 排班系统后端
 ├─ agent-service/   # 独立 Agent 服务（Spring AI + MCP Server + RAG）
+├─ docs/            # 架构说明与界面截图
 └─ README.md
 ```
 
@@ -92,6 +105,7 @@ npm run dev
 ```bash
 cd agent-service
 # 必填：DEEPSEEK_API_KEY；可选：SILICONFLOW_API_KEY（RAG 使用 BGE-M3，缺省用本地向量兜底）
+# 完整环境变量清单见 agent-service/.env.example（复制后填入密钥即可）
 mvn spring-boot:run
 ```
 
@@ -101,7 +115,7 @@ mvn spring-boot:run
 
 | 模块 | 命令 | 结果 |
 |---|---|---|
-| agent-service | `mvn test` | 57 个用例通过 |
+| agent-service | `mvn test` | 62 个用例通过（工具 / 审计 / RAG / 会话存储 / 注册表） |
 | 前端 | `npm run build` | 类型检查 + 构建通过 |
 
 ## 安全与数据说明
